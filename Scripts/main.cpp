@@ -3,12 +3,11 @@
 
 #include "ETL.h"
 #include "NeuralNetwork/NeuralNetwork.h"
-#include "NeuralNetwork/Layer.h"
 #include "NeuralNetwork/InputLayer.h"
 #include "NeuralNetwork/HiddenLayer.h"
 #include "NeuralNetwork/OutputLayer.h"
 
-void print_matrix(std::string name, Eigen::MatrixXd mat, bool print_mat)
+void print_matrix(const std::string& name, const Eigen::MatrixXd& mat, const bool print_mat)
 {
 	std::cout << name << " => Shape: (" << mat.rows() << "," << mat.cols() << ")" << std::endl;
 	if (print_mat)
@@ -77,10 +76,9 @@ int main()
 	//print_matrix("test_x", test_x, true);
 	//print_matrix("test_y", test_y, false);
 
-
 	int epochs = 50;
 	int print_step = 1;
-	float learning_rate = 0.06f;
+	float learning_rate = 0.5f;
 	for (int i = 0; i <= epochs; i++)
 	{
 		nn.train(train_x, train_y, learning_rate);
@@ -88,9 +86,13 @@ int main()
 		if (i % print_step == 0)
 		{
 			nn.predict(test_x, test_y);
-			std::cout << "Trained " << i + 1 << "." << std::endl;
+			std::cout << "Trained " << i + 1 << "." << std::endl << std::endl;
 		}
 	}
-
 #pragma endregion
+
+	Eigen::VectorXd guess = Eigen::VectorXd(3);
+	Eigen::VectorXd answer = Eigen::VectorXd(3);
+	guess << 0.2698, 0.3223, 0.4078;
+	answer << 1.0, 0.0, 0.0;
 }

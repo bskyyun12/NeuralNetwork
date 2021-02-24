@@ -9,6 +9,7 @@ public:
 	{
 		name = layer_name;
 		layer_vec = Eigen::VectorXd(size);
+		is_output_layer = true;
 	}
 
 	void propagate_forward() override

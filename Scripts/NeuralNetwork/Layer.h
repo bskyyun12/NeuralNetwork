@@ -20,6 +20,8 @@ public:
 	const Eigen::VectorXd get_bias() { return bias; }
 	const Eigen::MatrixXd get_error() { return error; }
 	const std::string get_weight_bias_name() { return weight_bias_name; }
+	const bool get_is_output_layer() { return is_output_layer; }
+
 
 	// setters
 	void set_layer_vec(const Eigen::VectorXd& layer) { layer_vec = layer; }
@@ -62,6 +64,8 @@ protected:
 	Eigen::VectorXd bias;
 
 	Eigen::MatrixXd error;
+
+	bool is_output_layer;
 
 private:
 

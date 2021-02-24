@@ -13,14 +13,22 @@ public:
 
 	void propagate_forward() override
 	{
-		// output sigmoid 
-		Eigen::MatrixXd next_layer_vec = (weight * layer_vec + bias).unaryExpr(Activation::Sigmoid());
+		if (next_layer->get_is_output_layer()) // next layer is output layer
+		{
+			//// output sigmoid
+			//Eigen::MatrixXd vec = (weight * layer_vec + bias).unaryExpr(Activation::Sigmoid());
 
-		// output softmax 
-		//Eigen::MatrixXd next_layer_vec = next_layer_vec.unaryExpr([](double elem) { return std::exp(elem); });
-		//next_layer_vec /= next_layer_vec.rowwise().sum().sum();
-		
-		next_layer->set_layer_vec(next_layer_vec);
+			// output softmax 
+			Eigen::VectorXd vec = (weight * layer_vec + bias).unaryExpr([](float elem) { return std::exp(elem); });
+			vec /= vec.rowwise().sum().sum();
+
+			next_layer->set_layer_vec(vec);
+		}
+		else // next layer is another hidden layer
+		{
+			Eigen::MatrixXd next_layer_vec = (weight * layer_vec + bias).unaryExpr(Activation::Sigmoid());
+			next_layer->set_layer_vec(next_layer_vec);
+		}
 	}
 
 	void propagate_backward(const Eigen::VectorXd& target, const float learning_rate) override
@@ -36,7 +44,7 @@ public:
 
 		// delta_weight = gradient dot prev_layer_transpose
 		Eigen::MatrixXd prev_layer_transpose = prev_layer->get_layer_vec().transpose();
-		Eigen::MatrixXd delta_weight = gradient * prev_layer_transpose ;
+		Eigen::MatrixXd delta_weight = gradient * prev_layer_transpose;
 		//Eigen::MatrixXd delta_weight = gradient * prev_layer_transpose;
 		prev_layer->set_weight(prev_layer->get_weight() + delta_weight);
 

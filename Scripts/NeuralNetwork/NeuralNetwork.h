@@ -48,6 +48,10 @@ public:
 		// categorical_crossentropy: -sum(answer * log(guess))
 		float categorical_crossentropy = 0.f;
 		float sum_of_categorical_crossentropy = 0.f;
+
+		float cross_entropy_loss = 0.f;
+		float sum_of_cross_entropy_loss = 0.f;
+
 		int correct_guesses = 0;
 		for (int i = 0; i < test_x.rows(); i++)
 		{
@@ -59,6 +63,13 @@ public:
 			// SoftMax
 			guess = guess.unaryExpr([](double elem) { return std::exp(elem); });
 			guess /= guess.rowwise().sum().sum();
+
+			// cross entropy //  * => array multiply
+			// formula: -((sum(target * log(output)) + sum((1-target) * log(1-output))))
+			float f1 = (answer.array() * guess.unaryExpr([](float x) {return std::log10(x); }).array()).sum();
+			float f2 = ((1 - answer.array()) * (1 - guess.array()).unaryExpr([](float x) {return std::log10(x); })).sum();
+			cross_entropy_loss = -(f1 + f2);
+			sum_of_cross_entropy_loss += cross_entropy_loss;
 
 			// categorical_crossentropy: -sum(answer * log(guess))
 			categorical_crossentropy = -1 * (float)(answer.transpose() * (guess.unaryExpr([](float x) {return std::log(x); }))).sum();
@@ -84,7 +95,8 @@ public:
 		}
 		std::cout << "-----------------------------" << std::endl;
 		std::cout << "Prediction result: " << correct_guesses << "/" << test_x.rows() << std::endl;
-		std::cout << "categorical_crossentropy: " << categorical_crossentropy / test_x.rows() << std::endl;
+		std::cout << "categorical_crossentropy: " << sum_of_categorical_crossentropy / test_x.rows() << std::endl;
+		std::cout << "cross_entropy: " << sum_of_cross_entropy_loss / test_x.rows() << std::endl;
 		std::cout << "-----------------------------" << std::endl;
 	}
 
