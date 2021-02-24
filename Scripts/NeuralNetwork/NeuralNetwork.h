@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "Layer.h"
+#include "Loss.h"
 
 class NeuralNetwork
 {
@@ -24,7 +25,7 @@ public:
 		layers.push_back(shared);
 	}
 
-	void make_model()
+	void make_model(Loss loss)
 	{
 		// set up weight and bias
 		for (int i = 0; i < layers.size() - 1; i++)
@@ -32,6 +33,8 @@ public:
 			std::string name = layers[i]->get_name() + " to " + layers[i + 1]->get_name();
 			layers[i]->init_weight_bias(name);
 		}
+
+		this->loss = loss;
 	}
 
 	void train(const Eigen::MatrixXd& train_x, const Eigen::MatrixXd& train_y, const float learning_rate)
@@ -45,58 +48,30 @@ public:
 
 	void predict(const Eigen::MatrixXd& test_x, const Eigen::MatrixXd& test_y)
 	{
-		// categorical_crossentropy: -sum(answer * log(guess))
 		float categorical_crossentropy = 0.f;
-		float sum_of_categorical_crossentropy = 0.f;
+		float correct_predicts = 0;
+		int num_of_predicts = (int)test_x.rows();
+		Eigen::VectorXd losses = Eigen::VectorXd(num_of_predicts);
 
-		float cross_entropy_loss = 0.f;
-		float sum_of_cross_entropy_loss = 0.f;
-
-		int correct_guesses = 0;
-		for (int i = 0; i < test_x.rows(); i++)
+		for (int i = 0; i < num_of_predicts; i++)
 		{
 			propagate_forward(test_x.row(i).transpose());
-
-			Eigen::VectorXd guess = get_output_vector();
+			Eigen::VectorXd predict = get_output_vector();
 			Eigen::VectorXd answer = test_y.row(i);
 
-			// SoftMax
-			guess = guess.unaryExpr([](double elem) { return std::exp(elem); });
-			guess /= guess.rowwise().sum().sum();
+			losses[i] = get_loss(predict, answer);
 
-			// cross entropy //  * => array multiply
-			// formula: -((sum(target * log(output)) + sum((1-target) * log(1-output))))
-			float f1 = (answer.array() * guess.unaryExpr([](float x) {return std::log10(x); }).array()).sum();
-			float f2 = ((1 - answer.array()) * (1 - guess.array()).unaryExpr([](float x) {return std::log10(x); })).sum();
-			cross_entropy_loss = -(f1 + f2);
-			sum_of_cross_entropy_loss += cross_entropy_loss;
-
-			// categorical_crossentropy: -sum(answer * log(guess))
-			categorical_crossentropy = -1 * (float)(answer.transpose() * (guess.unaryExpr([](float x) {return std::log(x); }))).sum();
-			sum_of_categorical_crossentropy += categorical_crossentropy;
-
-			//std::cout << "Inputs: \n" << test_x.row(i) << std::endl;
 			int answer_index = get_index_of_max_value(answer);
-			int guess_index = get_index_of_max_value(guess);
+			int guess_index = get_index_of_max_value(predict);
 
-			//std::cout << "Test " << i << ". " << "Answer: " << answer_index << ", guessed: " << guess_index;
 			if (answer_index == guess_index)
 			{
-				correct_guesses++;
-				//std::cout << " (Good!)" << std::endl;
+				correct_predicts++;
 			}
-			else
-			{
-				//std::cout << " (Baad!)" << std::endl;
-				//std::cout << "guess: (" << guess.transpose() << ")" << std::endl;
-				//std::cout << "answer: (" << answer.transpose() << ")" << std::endl;
-			}
-			//std::cout << "-----------------------------" << std::endl;
 		}
 		std::cout << "-----------------------------" << std::endl;
-		std::cout << "Prediction result: " << correct_guesses << "/" << test_x.rows() << std::endl;
-		std::cout << "categorical_crossentropy: " << sum_of_categorical_crossentropy / test_x.rows() << std::endl;
-		std::cout << "cross_entropy: " << sum_of_cross_entropy_loss / test_x.rows() << std::endl;
+		std::cout << "Prediction result: " << correct_predicts << "/" << num_of_predicts << std::endl;
+		std::cout << "loss(" << loss_to_string(loss) << "): " << losses.mean() << ", accuracy: " << correct_predicts / num_of_predicts << std::endl;
 		std::cout << "-----------------------------" << std::endl;
 	}
 
@@ -129,6 +104,24 @@ public:
 		{
 			layers[i]->propagate_backward(target, learning_rate);
 		}
+	}
+
+	float get_loss(const Eigen::VectorXd& predict, const Eigen::VectorXd& answer)
+	{
+		if (loss == Loss::Categorical_Crossentropy)
+		{
+			// cross_entropy_loss: -((sum(answer * log(predict)) + sum((1-answer) * log(1-predict))))
+			float f1 = (float)(answer.array() * predict.unaryExpr([](float x) {return std::log10(x); }).array()).sum();
+			float f2 = (float)((1 - answer.array()) * (1 - predict.array()).unaryExpr([](float x) {return std::log10(x); })).sum();
+			return -(f1 + f2);
+		}
+		else if (loss == Loss::Crossentropy)
+		{
+			// categorical_crossentropy: -sum(answer * log(predict))
+			return -1 * (float)(answer.transpose() * (predict.unaryExpr([](float x) {return std::log10(x); }))).sum();
+		}
+
+		return -1;
 	}
 
 	// Debugging methods
@@ -181,5 +174,7 @@ public:
 
 private:
 	std::vector<std::shared_ptr<Layer>> layers;
+
+	Loss loss;
 };
 

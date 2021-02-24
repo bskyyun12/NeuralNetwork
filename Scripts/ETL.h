@@ -21,8 +21,8 @@ public:
 
 private:
 	std::string path;
-	char separator;
-	bool header;
+	char separator = ',';
+	bool header = true;
 
 	std::vector<std::vector<std::string>> read_csv();
 

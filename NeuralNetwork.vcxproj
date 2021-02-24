@@ -152,6 +152,7 @@
     <ClInclude Include="Scripts\NeuralNetwork\HiddenLayer.h" />
     <ClInclude Include="Scripts\NeuralNetwork\InputLayer.h" />
     <ClInclude Include="Scripts\NeuralNetwork\Layer.h" />
+    <ClInclude Include="Scripts\NeuralNetwork\Loss.h" />
     <ClInclude Include="Scripts\NeuralNetwork\NeuralNetwork.h" />
     <ClInclude Include="Scripts\NeuralNetwork\OutputLayer.h" />
   </ItemGroup>

@@ -66,7 +66,7 @@ int main()
 	nn.add_layer(std::make_unique<InputLayer>(" Input", data_x.cols()));
 	nn.add_layer(std::make_unique<HiddenLayer>("Hidden", 84));
 	nn.add_layer(std::make_unique<OutputLayer>("Output", data_y.cols()));
-	nn.make_model();
+	nn.make_model(Loss::Categorical_Crossentropy);
 	nn.summary();
 
 	//print_matrix("data_x", data_x, false);
@@ -78,7 +78,7 @@ int main()
 
 	int epochs = 50;
 	int print_step = 1;
-	float learning_rate = 0.5f;
+	float learning_rate = 0.3f;
 	for (int i = 0; i <= epochs; i++)
 	{
 		nn.train(train_x, train_y, learning_rate);
@@ -90,9 +90,4 @@ int main()
 		}
 	}
 #pragma endregion
-
-	Eigen::VectorXd guess = Eigen::VectorXd(3);
-	Eigen::VectorXd answer = Eigen::VectorXd(3);
-	guess << 0.2698, 0.3223, 0.4078;
-	answer << 1.0, 0.0, 0.0;
 }
